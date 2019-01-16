@@ -1,6 +1,6 @@
 ## Assignment Submission
 
-- [PA1_template.md](./PA1_template.md)
+- [PA1_template.md](/PA1_template.md)
 
 ## Introduction
 
