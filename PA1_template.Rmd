@@ -5,14 +5,14 @@ output:
     keep_md: true
 ---
 
-```{r setup, echo=FALSE}
+```{r setup}
 library(ggplot2)
 library(data.table)
 ```
 
 ## Download the CSV file from online URL
 
-```{r  echo=FALSE}
+```{r}
 file <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 download.file(file, destfile = paste0(getwd(), '/repdata%2Fdata%2Factivity.zip'), method = "curl")
 unzip("repdata%2Fdata%2Factivity.zip",exdir = "data")
@@ -21,71 +21,81 @@ unzip("repdata%2Fdata%2Factivity.zip",exdir = "data")
 
 ## Now read the downloaded file in to a DataTable variable
 
-```{r echo=FALSE}
+```{r}
 activityDT <- data.table::fread(input = "data/activity.csv")
 head(activityDT)
 ```
 
 ## Calculate total no of steps taken each day. This is calculated by taking standard deviation
 
-```{r echo=FALSE}
-total_steps_pd <- activityDT[, c(lapply(.SD, sum, na.rm = FALSE)),  by = .(date), .SDcols = c("steps")] 
+```{r}
+total_steps_pd <- activityDT[, c(lapply(.SD, sum, na.rm = FALSE)),  by = .(date), .SDcols = c("steps")]
+head(total_steps_pd,10)
 ```
 
 ## Now plot the toal_steps_pd using ggplot- histogram
-```{r echo=FALSE}
+```{r}
 ggplot(total_steps_pd, aes(x = steps)) +
     geom_histogram(fill = "blue", binwidth = 200) +
     labs(title = "Daily Steps", x = "Steps", y = "Frequency")
 ```
 
 ## Calculate mean and median of total no of steps taken each day
-```{r echo=FALSE}
+```{r}
 total_steps_pd[, .(mean_steps = mean(steps, na.rm = TRUE), median_steps = median(steps, na.rm = TRUE))]
 ```
 
 ## 5-minute interval that, on average, contains the maximum number of steps
-```{r echo=FALSE}
+```{R}
 intervalDT <- activityDT[, c(lapply(.SD, mean, na.rm = TRUE)), .SDcols = c("steps"), by = .(interval)] 
+head(intervalDT, 10)
 ```
 
 ## Plot time series plot for average number of steps taken
-```{r echo=FALSE}
+```{r}
 ggplot(intervalDT, aes(x = interval , y = steps)) + geom_line(color="blue", size=1) + labs(title = "Avg. Daily Steps", x = "Interval", y = "Avg. Steps per day")
 ```
 
 
 ## Imputing NA values from the dataTable
 
-```{r echo=FALSE}
+```{r}
 # Devise a method to fill missing data
 activityDT[is.na(steps), "steps"] <- activityDT[, c(lapply(.SD, median, na.rm = TRUE)), .SDcols = c("steps")]
+activityDT
 ```
 
 
-```{r echo=FALSE}
+```{r}
 # Now create a new data table with all the missing values filled in
 data.table::fwrite(x = activityDT, file = "data/tidyData.csv", quote = FALSE)
 
 ```
 ### Total steps taken per day
-```{r echo=FALSE}
+```{r}
 Total_Steps <- activityDT[, c(lapply(.SD, sum)), .SDcols = c("steps"), by = .(date)] 
+head(Total_Steps,10)
 ```
 
 ### mean and median total number of steps taken per day
-```{r echo=FALSE}
+```{R}
 Total_Steps[, .(Mean_Steps = mean(steps), Median_Steps = median(steps))]
 ```
 
-```{}
+### Comparison between Mean and Median with and without NA values
+```{r}
+x <- total_steps_pd[, .(TYPE = "With NAs", MEAN = mean(steps, na.rm = TRUE), MEDIAN = median(steps, na.rm = TRUE))]
+y <- Total_Steps[, .(TYPE = "Without NAs", MEAN = mean(steps), MEDIAN = median(steps))]
+rbind(x,y)
+```
 
+```{}
 Important: Here you can see that mean and median has changed with and without NA values in the data set
 ```
 
 ## Difference between activities between weekday and weekends
 
-```{r echo=FALSE}
+```{r}
 activityDT <- data.table::fread(input = "data/activity.csv")
 activityDT[, date := as.POSIXct(date, format = "%Y-%m-%d")]
 activityDT[, `Day of Week`:= weekdays(x = date)]
@@ -97,7 +107,7 @@ head(activityDT, 10)
 
 ## Plotting for Weekend and weekdays activity patterns
 
-```{r echo=FALSE}
+```{r}
 activityDT[is.na(steps), "steps"] <- activityDT[, c(lapply(.SD, median, na.rm = TRUE)), .SDcols = c("steps")]
 IntervalDT <- activityDT[, c(lapply(.SD, mean, na.rm = TRUE)), .SDcols = c("steps"), by = .(interval, `weekday or weekend`)] 
 
